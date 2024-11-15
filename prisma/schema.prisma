@@ -8,14 +8,13 @@ datasource db {
 }
 
 model Character {
-  id    Int    @id @default(autoincrement())
-  name  String
-  minX  Float
-  maxX  Float
-  minY  Float
-  maxY  Float
+  id   Int    @id @default(autoincrement())
+  name String
+  minX Float
+  maxX Float
+  minY Float
+  maxY Float
 }
-
 
 model Game {
   id           Int       @id @default(autoincrement())

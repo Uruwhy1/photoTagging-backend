@@ -8,6 +8,13 @@ const app = express();
 app.use(express.json());
 app.use("/", gameRouter);
 
+afterAll(async () => {
+  await prisma.$queryRaw`TRUNCATE TABLE "Game" RESTART IDENTITY CASCADE;`;
+  await prisma.$queryRaw`TRUNCATE TABLE "Character" RESTART IDENTITY CASCADE;`;
+  await prisma.$queryRaw`TRUNCATE TABLE "GameCharacter" RESTART IDENTITY CASCADE;`;
+  await prisma.$disconnect();
+});
+
 describe("POST /setup", () => {
   describe("valid setup", () => {
     it("sets up the game successfully", async () => {
@@ -21,13 +28,15 @@ describe("POST /setup", () => {
 });
 
 describe("POST /:gameId/start", () => {
+  let gameId;
+
+  beforeEach(async () => {
+    const setupRes = await request(app).post("/setup").send();
+    gameId = setupRes.body.gameId;
+  });
+
   describe("valid username is provided", () => {
     it("starts the game successfully", async () => {
-      // set up
-      const setupRes = await request(app).post("/setup").send();
-      const gameId = setupRes.body.gameId;
-
-      // test
       const res = await request(app)
         .post(`/${gameId}/start`)
         .send({ username: "facundo" });
@@ -38,21 +47,11 @@ describe("POST /:gameId/start", () => {
 
   describe("invalid username is provided", () => {
     it("missing username", async () => {
-      // set up
-      const setupRes = await request(app).post("/setup").send();
-      const gameId = setupRes.body.gameId;
-
-      // test
       const res = await request(app).post(`/${gameId}/start`).send({});
       expect(res.statusCode).toEqual(201);
     });
 
     it("malformed username", async () => {
-      // set up
-      const setupRes = await request(app).post("/setup").send();
-      const gameId = setupRes.body.gameId;
-
-      // test
       const res = await request(app)
         .post(`/${gameId}/start`)
         .send({ username: " asdsa<>asdsa" });
@@ -61,11 +60,6 @@ describe("POST /:gameId/start", () => {
     });
 
     it("empty username", async () => {
-      // set up
-      const setupRes = await request(app).post("/setup").send();
-      const gameId = setupRes.body.gameId;
-
-      // test
       const res = await request(app)
         .post(`/${gameId}/start`)
         .send({ username: "        " });
@@ -88,15 +82,5 @@ describe("POST /:gameId/check", () => {
 
       expect(res.statusCode).toEqual(400);
     });
-  });
-});
-
-
-
-
-// has to be at end
-describe("reset operations", () => {
-  it("reset database", async () => {
-    await prisma.$queryRaw`TRUNCATE TABLE "Game" RESTART IDENTITY CASCADE;`;
   });
 });

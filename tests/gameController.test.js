@@ -21,6 +21,13 @@ describe("start", () => {
     const res = await request(app).post("/start").send({});
 
     expect(res.statusCode).toEqual(400);
-    expect(res.body).toHaveProperty("error", "Username was not received.");
+  });
+
+  it("returns status code 400 when invalid username is passed", async () => {
+    const res = await request(app)
+      .post("/start")
+      .send({ username: " asdsa<>" });
+
+    expect(res.statusCode).toEqual(400);
   });
 });

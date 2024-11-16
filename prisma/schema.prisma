@@ -8,18 +8,31 @@ datasource db {
 }
 
 model Character {
-  id   Int    @id @default(autoincrement())
-  name String
-  minX Float
-  maxX Float
-  minY Float
-  maxY Float
+  id    Int             @id @default(autoincrement())
+  name  String
+  minX  Float
+  maxX  Float
+  minY  Float
+  maxY  Float
+  games GameCharacter[]
 }
 
 model Game {
-  id           Int       @id @default(autoincrement())
+  id           Int             @id @default(autoincrement())
   username     String
   startDate    DateTime
   endDate      DateTime?
-  foundCounter Int       @default(0)
+  foundCounter Int             @default(0)
+  characters   GameCharacter[]
+}
+
+model GameCharacter {
+  id          Int       @id @default(autoincrement())
+  gameId      Int
+  characterId Int
+  found       Boolean   @default(false)
+  game        Game      @relation(fields: [gameId], references: [id])
+  character   Character @relation(fields: [characterId], references: [id])
+
+  @@unique([gameId, characterId])
 }

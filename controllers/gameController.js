@@ -1,15 +1,61 @@
 const prisma = require("../prismaClient");
 
+const setUpGame = async (req, res) => {
+  try {
+    // select characters
+    const selectedCharacters = await prisma.character.findMany({
+      take: 3,
+      orderBy: {
+        id: "asc",
+      },
+    });
+
+    // create placeholder game
+    const newGame = await prisma.game.create({
+      data: {
+        username: "placeholder",
+        startDate: new Date(),
+      },
+    });
+
+    // link characters and game
+    const gameCharacterLinks = selectedCharacters.map((character) => ({
+      gameId: newGame.id,
+      characterId: character.id,
+      found: false,
+    }));
+
+    await prisma.gameCharacter.createMany({
+      data: gameCharacterLinks,
+    });
+
+    return res.status(200).json({
+      gameId: newGame.id,
+      characterIds: selectedCharacters.map((character) => character.id),
+    });
+  } catch (error) {
+    console.error("Error setting up the game:", error);
+    return res.status(500).json({ error: "Failed to set up the game" });
+  }
+};
+
 const startGame = async (req, res) => {
+  const { gameId } = req.params;
   let { username } = req.body;
 
   const validUsernameRegex = /^[A-Za-z0-9]+$/;
   if (!username || !validUsernameRegex.test(username)) {
-    username = "User";
+    username = "default";
   }
 
+  if (!gameId || isNaN(+gameId)) {
+    return res.status(400).json({ error: "Game ID is required" });
+  }
+
+  // update start date and username
   try {
-    const newGame = await prisma.game.create({
+    const updatedGame = await prisma.game.update({
+      where: { id: +gameId },
       data: {
         username,
         startDate: new Date(),
@@ -18,11 +64,10 @@ const startGame = async (req, res) => {
 
     res.status(201).json({
       message: "Game started",
-      gameId: newGame.id,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Failed to start the game." });
+    console.error("Error starting the game:", error);
+    res.status(500).json({ error: "Failed to start the game" });
   }
 };
 
@@ -57,6 +102,7 @@ const getHighScores = (req, res) => {
 };
 
 module.exports = {
+  setUpGame,
   startGame,
   checkCharacter,
   getHighScores,

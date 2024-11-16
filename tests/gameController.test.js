@@ -1,4 +1,5 @@
 const gameRouter = require("../routes/gameRouter");
+const prisma = require("../prismaClient.js");
 
 const request = require("supertest");
 const express = require("express");
@@ -87,5 +88,15 @@ describe("POST /:gameId/check", () => {
 
       expect(res.statusCode).toEqual(400);
     });
+  });
+});
+
+
+
+
+// has to be at end
+describe("reset operations", () => {
+  it("reset database", async () => {
+    await prisma.$queryRaw`TRUNCATE TABLE "Game" RESTART IDENTITY CASCADE;`;
   });
 });

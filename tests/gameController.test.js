@@ -13,6 +13,7 @@ describe("POST /start", () => {
       const res = await request(app)
         .post("/start")
         .send({ username: "facundo" });
+
       expect(res.statusCode).toEqual(201);
       expect(res.body).toHaveProperty("gameId");
     });
@@ -28,6 +29,7 @@ describe("POST /start", () => {
       const res = await request(app)
         .post("/start")
         .send({ username: " asdsa<>asdsa" });
+
       expect(res.statusCode).toEqual(201);
     });
 
@@ -35,7 +37,23 @@ describe("POST /start", () => {
       const res = await request(app)
         .post("/start")
         .send({ username: "        " });
+
       expect(res.statusCode).toEqual(201);
+    });
+  });
+});
+
+describe("POST /:gameId/check", () => {
+  describe("invalid gameId is provided", () => {
+    it("nonexistant gameId", async () => {
+      const res = await request(app).post("/-1/check").send();
+
+      expect(res.statusCode).toEqual(404);
+    });
+    it("string gameId", async () => {
+      const res = await request(app).post("/hello/check").send();
+
+      expect(res.statusCode).toEqual(400);
     });
   });
 });

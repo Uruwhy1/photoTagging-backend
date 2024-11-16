@@ -22,13 +22,34 @@ const startGame = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: "Failed to start the game" });
+    res.status(500).json({ error: "Failed to start the game." });
   }
 };
 
-const checkCharacter = (req, res) => {
+const checkCharacter = async (req, res) => {
   const { gameId } = req.params;
-  res.send(`Character check for game ID: ${gameId}`);
+
+  if (isNaN(+gameId)) {
+    return res.status(400).json({ error: "Invalid game ID provided." });
+  }
+
+  try {
+    // find game
+    const game = await prisma.game.findUnique({
+      where: {
+        id: +gameId,
+      },
+    });
+
+    if (!game) {
+      return res.status(404).json({ error: "Game does not exist." });
+    }
+    // check character location
+    // TODO: add the logic for character check.
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Failed to check character" });
+  }
 };
 
 const getHighScores = (req, res) => {

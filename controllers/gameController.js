@@ -2,7 +2,8 @@ const prisma = require("../prismaClient");
 
 const startGame = async (req, res) => {
   const { username } = req.body;
-  const validUsernameRegex = /^[A-Za-z0-9]+-[0-9]+$/;
+
+  const validUsernameRegex = /^[A-Za-z0-9]+$/;
   if (!username || !validUsernameRegex.test(username)) {
     return res.status(400).json({ error: "Invalid username format." });
   }
@@ -18,7 +19,6 @@ const startGame = async (req, res) => {
     res.status(201).json({
       message: "Game started",
       gameId: newGame.id,
-      username: newGame.username,
     });
   } catch (error) {
     console.log(error);

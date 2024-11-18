@@ -5,10 +5,12 @@ const request = require("supertest");
 const express = require("express");
 const app = express();
 
+const { createGames } = require("./createGames");
+
 app.use(express.json());
 app.use("/", gameRouter);
 
-afterAll(async () => {
+afterEach(async () => {
   await prisma.$queryRaw`TRUNCATE TABLE "Game" RESTART IDENTITY CASCADE;`;
   await prisma.$queryRaw`TRUNCATE TABLE "GameCharacter" RESTART IDENTITY CASCADE;`;
   await prisma.$disconnect();
@@ -169,5 +171,27 @@ describe("POST /:gameId/check", () => {
 
       expect(res.statusCode).toEqual(400);
     });
+  });
+});
+
+describe.only("GET /highscores", () => {
+  it("returns high scores correctly", async () => {
+    await createGames();
+
+    const res = await request(app).get("/highscores");
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty("highscores");
+
+    res.body.highscores.forEach((score) => {
+      expect(typeof score.duration).toBe("number");
+      expect(isNaN(score.duration)).toBe(false); // Ensure it's not NaN
+    });
+  });
+  it("handles empty highscores", async () => {
+    const res = await request(app).get("/highscores");
+
+    expect(res.statusCode).toEqual(404);
+    expect(res.body).toHaveProperty("error");
   });
 });

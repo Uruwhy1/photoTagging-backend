@@ -168,16 +168,24 @@ const checkGameStatus = async (gameId) => {
 
 const getHighScores = async (req, res) => {
   try {
-    const highScores = await prisma.$queryRaw`
+    const highscores = await prisma.$queryRaw`
       SELECT username, EXTRACT(EPOCH FROM "endDate" - "startDate") AS duration
       FROM "Game"
       ORDER BY duration DESC
       LIMIT 10
     `;
 
-    res.json({ highScores });
+    if (highscores.length === 0) {
+      return res.status(404).json({ error: "There are no finished games." });
+    }
+
+    const formattedScores = highscores.map((score) => ({
+      username: score.username,
+      duration: parseFloat(score.duration),
+    }));
+
+    res.json({ highscores: formattedScores });
   } catch (error) {
-    console.log(error.message);
     console.error("Error fetching high scores:", error);
     res.status(500).json({ error: "Failed to fetch high scores" });
   }

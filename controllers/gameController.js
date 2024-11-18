@@ -73,13 +73,14 @@ const startGame = async (req, res) => {
 
 const checkCharacter = async (req, res) => {
   const { gameId } = req.params;
+  const { coordinates } = req.body;
 
   if (isNaN(+gameId)) {
     return res.status(400).json({ error: "Invalid game ID provided." });
   }
 
   try {
-    // find game
+    // find the game
     const game = await prisma.game.findUnique({
       where: {
         id: +gameId,
@@ -89,12 +90,80 @@ const checkCharacter = async (req, res) => {
     if (!game) {
       return res.status(404).json({ error: "Game does not exist." });
     }
-    // check character location
-    // TODO: add the logic for character check.
+
+    // fetch linked characters to the game
+    const gameCharacters = await prisma.gameCharacter.findMany({
+      where: {
+        gameId: +gameId,
+        found: false,
+      },
+      include: {
+        character: true,
+      },
+    });
+
+    // check coordinates
+    let foundCharacterId = await checkCoordinates(gameCharacters, coordinates);
+
+    // handle return response
+    if (foundCharacterId) {
+      const isGameComplete = await checkGameStatus(+gameId);
+
+      if (isGameComplete) {
+        return res
+          .status(200)
+          .json({ message: "Game complete!", characterId: foundCharacterId });
+      } else {
+        return res
+          .status(200)
+          .json({ message: "Character found!", characterId: foundCharacterId });
+      }
+    } else {
+      return res
+        .status(404)
+        .json({ error: "Character not found in the provided coordinates." });
+    }
   } catch (err) {
-    console.log(err);
+    console.error("Error checking character:", err);
     res.status(500).json({ error: "Failed to check character" });
   }
+};
+
+const checkCoordinates = async (chars, coordinates) => {
+  for (const gameCharacter of chars) {
+    const { character } = gameCharacter;
+
+    if (
+      coordinates.x >= character.minX &&
+      coordinates.x <= character.maxX &&
+      coordinates.y >= character.minY &&
+      coordinates.y <= character.maxY
+    ) {
+      await prisma.gameCharacter.update({
+        where: {
+          id: gameCharacter.id,
+        },
+        data: {
+          found: true,
+        },
+      });
+
+      return character.id;
+    }
+  }
+
+  return false;
+};
+
+const checkGameStatus = async (gameId) => {
+  const remainingCharacters = await prisma.gameCharacter.count({
+    where: {
+      gameId,
+      found: false,
+    },
+  });
+
+  return remainingCharacters === 0;
 };
 
 const getHighScores = (req, res) => {

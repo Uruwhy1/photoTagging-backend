@@ -2,13 +2,13 @@ const prisma = require("../prismaClient");
 
 const setUpGame = async (req, res) => {
   try {
-    // select characters
-    const selectedCharacters = await prisma.character.findMany({
-      take: 3,
-      orderBy: {
-        id: "asc",
-      },
-    });
+    // select random characters
+    const selectedCharacters = await prisma.$queryRaw`
+      SELECT id
+      FROM "Character"
+      ORDER BY RANDOM()
+      LIMIT 3;
+    `;
 
     // create placeholder game
     const newGame = await prisma.game.create({
@@ -168,6 +168,8 @@ const checkGameStatus = async (gameId) => {
 
 const getHighScores = (req, res) => {
   res.send("High scores retrieved");
+
+  // fetch 10 scores sorted by date-end - date-start
 };
 
 module.exports = {

@@ -5,16 +5,8 @@ const cors = require("cors");
 const app = express();
 const PORT = 3000;
 
-app.use((req, res, next) => {
-  const origin = req.get("origin") || "No origin";
-  console.log(`Origin: ${origin}`, origin == process.env.CORS_ORIGIN);
-
-  console.log(req.url);
-  next();
-});
-
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || "*", 
+  origin: process.env.CORS_ORIGIN || "*",
 };
 app.use(cors(corsOptions));
 

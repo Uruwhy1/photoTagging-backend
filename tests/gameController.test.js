@@ -174,7 +174,7 @@ describe("POST /:gameId/check", () => {
   });
 });
 
-describe.only("GET /highscores", () => {
+describe("GET /highscores", () => {
   it("returns high scores correctly", async () => {
     await createGames();
 

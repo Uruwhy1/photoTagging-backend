@@ -81,7 +81,6 @@ describe("POST /:gameId/check", () => {
     const setupRes = await request(app).post("/setup").send();
     gameId = setupRes.body.gameId;
 
-    // get characters to check x and y stuff
     assignedCharacters = await prisma.gameCharacter.findMany({
       where: { gameId: gameId },
       include: {
@@ -98,14 +97,14 @@ describe("POST /:gameId/check", () => {
         y: (character.minY + character.maxY) / 2,
       };
 
-      const res = await request(app)
-        .post(`/${gameId}/check`)
-        .send({ coordinates: validCoordinates });
+      const res = await request(app).post(`/${gameId}/check`).send({
+        coordinates: validCoordinates,
+        characterId: character.id,
+      });
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty("message", "Character found!");
-      expect(res.body).toHaveProperty("characterId");
-      expect(res.body.characterId).toBe(character.id);
+      expect(res.body).toHaveProperty("characterId", character.id);
     });
   });
 
@@ -121,12 +120,13 @@ describe("POST /:gameId/check", () => {
           y: (character.minY + character.maxY) / 2,
         };
 
-        const res = await request(app)
-          .post(`/${gameId}/check`)
-          .send({ coordinates: validCoordinates });
+        const res = await request(app).post(`/${gameId}/check`).send({
+          coordinates: validCoordinates,
+          characterId: character.id,
+        });
 
         expect(res.statusCode).toEqual(200);
-        expect(res.body).toHaveProperty("characterId");
+        expect(res.body).toHaveProperty("characterId", character.id);
       }
 
       // final check with game winning return
@@ -135,9 +135,10 @@ describe("POST /:gameId/check", () => {
         y: (finalCharacter.character.minY + finalCharacter.character.maxY) / 2,
       };
 
-      const finalRes = await request(app)
-        .post(`/${gameId}/check`)
-        .send({ coordinates: finalCoordinates });
+      const finalRes = await request(app).post(`/${gameId}/check`).send({
+        coordinates: finalCoordinates,
+        characterId: finalCharacter.character.id,
+      });
 
       expect(finalRes.body).toHaveProperty("message", "Game complete!");
     });
@@ -145,11 +146,13 @@ describe("POST /:gameId/check", () => {
 
   describe("invalid character check", () => {
     it("does not find a character with wrong coordinates", async () => {
+      const { character } = assignedCharacters[0];
       const wrongCoordinates = { x: 9999, y: 9999 };
 
-      const res = await request(app)
-        .post(`/${gameId}/check`)
-        .send({ coordinates: wrongCoordinates });
+      const res = await request(app).post(`/${gameId}/check`).send({
+        coordinates: wrongCoordinates,
+        characterId: character.id,
+      });
 
       expect(res.statusCode).toEqual(404);
       expect(res.body).toHaveProperty(
@@ -159,15 +162,39 @@ describe("POST /:gameId/check", () => {
     });
   });
 
+  describe("invalid request parameters", () => {
+    it("missing characterId", async () => {
+      const res = await request(app)
+        .post(`/${gameId}/check`)
+        .send({ coordinates: { x: 100, y: 100 } });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty(
+        "error",
+        "Invalid game ID or character ID."
+      );
+    });
+  });
+
   describe("invalid gameId is provided", () => {
     it("nonexistent gameId", async () => {
-      const res = await request(app).post("/-1/check").send();
+      const res = await request(app)
+        .post("/-1/check")
+        .send({
+          coordinates: { x: 100, y: 100 },
+          characterId: 1,
+        });
 
       expect(res.statusCode).toEqual(404);
     });
 
     it("string gameId", async () => {
-      const res = await request(app).post("/hello/check").send();
+      const res = await request(app)
+        .post("/hello/check")
+        .send({
+          coordinates: { x: 100, y: 100 },
+          characterId: 1,
+        });
 
       expect(res.statusCode).toEqual(400);
     });

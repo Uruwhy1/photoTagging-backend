@@ -109,6 +109,13 @@ const checkCharacter = async (req, res) => {
       const isGameComplete = await checkGameStatus(+gameId);
 
       if (isGameComplete) {
+        await prisma.game.update({
+          where: { id: +gameId },
+          data: {
+            endDate: new Date(),
+          },
+        });
+
         return res.status(200).json({ message: "Game complete!", characterId });
       } else {
         return res
@@ -165,9 +172,10 @@ const getHighScores = async (req, res) => {
   try {
     const highscores = await prisma.$queryRaw`
       SELECT username, EXTRACT(EPOCH FROM "endDate" - "startDate") AS duration
-      FROM "Game"
-      ORDER BY duration DESC
-      LIMIT 10
+      FROM "Game"      
+      WHERE "endDate" IS NOT NULL
+      ORDER BY duration ASC
+      LIMIT 5
     `;
 
     if (highscores.length === 0) {

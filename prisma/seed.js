@@ -3,7 +3,6 @@ const prisma = require("../prismaClient");
 async function main() {
   // prettier-ignore
   const characters = [
-    { name: "Sleeping Dragon", minX: 0.903, maxX: 0.976, minY: 0.006, maxY: 0.063 },
     { name: "Red Dragon", minX: 0.408, maxX: 0.494, minY: 0.063, maxY: 0.099 },
     { name: "Yellow Fish", minX: 0.620, maxX: 0.645, minY: 0.970, maxY: 0.989 },
     { name: "Ship Guy", minX: 0.039, maxX: 0.063, minY: 0.413, maxY: 0.433 },

@@ -8,7 +8,12 @@
   "scripts": {
     "seed": "node prisma/seed.js",
     "dev": "cp .env.dev .env && node --watch app.js",
+    "start": "node app.js",
+    "build": "prisma generate && prisma migrate deploy && prisma db seed",
     "test": "cp .env.test .env && jest"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   },
   "devDependencies": {
     "jest": "^29.7.0",
